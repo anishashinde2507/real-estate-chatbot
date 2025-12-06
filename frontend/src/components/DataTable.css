@@ -1,0 +1,94 @@
+/**
+ * DataTable styles
+ */
+
+.data-table-wrapper {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.table-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.table-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.table-container {
+  flex: 1;
+  overflow-x: auto;
+  background: #f8f9fa;
+}
+
+.table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: #e8e8e8;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.data-table thead {
+  background: #e8f0fe;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.data-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #667eea;
+}
+
+.data-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e0e0e0;
+  color: #555;
+}
+
+.data-table tbody tr.even {
+  background: #fff;
+}
+
+.data-table tbody tr.odd {
+  background: #f8f9fa;
+}
+
+.data-table tbody tr:hover {
+  background: #e8f0fe;
+}
+
+.empty-table {
+  padding: 40px 20px;
+  text-align: center;
+  color: #999;
+}
+
+.empty-table p {
+  margin: 0;
+  font-size: 14px;
+}
