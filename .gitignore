@@ -1,3 +1,7 @@
+# Documentation
+*.md
+!README.md
+
 # Environment variables
 .env
 .env.local
