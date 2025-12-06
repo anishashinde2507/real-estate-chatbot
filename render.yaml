@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: real-estate-backend
+    runtime: python
+    pythonVersion: 3.11
+    
+    # Build configuration
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: bash backend/start.sh
+    
+    # Expose on standard port
+    port: 8000
+    
+    # Health check
+    healthCheckPath: /api/health/
+    
+    # Environment variables
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: realestate_api.settings
+      - key: DEBUG
+        value: false
+        sync: false
+      - key: HUGGINGFACE_API_KEY
+        sync: false
+      - key: ALLOWED_HOSTS
+        value: real-estate-backend.onrender.com
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+    
+    # Disk for file uploads
+    disk:
+      name: real-estate-data
+      mountPath: /data
+      sizeGB: 10
+    
+    # Auto-restart on crash
+    autoRestart: true

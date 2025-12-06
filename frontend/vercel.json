@@ -1,0 +1,24 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "routes": [
+    {
+      "src": "^/(?P<route>.*)",
+      "methods": ["GET"],
+      "dest": "/index.html"
+    },
+    {
+      "src": "^/api/.*",
+      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+      "dest": "$1"
+    },
+    {
+      "src": "^/static/.*",
+      "methods": ["GET"],
+      "dest": "$1"
+    }
+  ],
+  "env": {
+    "REACT_APP_API_URL": "@react_app_api_url"
+  }
+}

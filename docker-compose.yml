@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: realestate-backend
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             gunicorn realestate_api.wsgi:application --bind 0.0.0.0:8000 --reload"
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=development-secret-key-change-in-production
+      - HUGGINGFACE_API_KEY=${HUGGINGFACE_API_KEY}
+      - ALLOWED_HOSTS=localhost,127.0.0.1,backend
+      - DJANGO_SETTINGS_MODULE=realestate_api.settings
+    volumes:
+      - ./backend:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    networks:
+      - realestate-network
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: realestate-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - realestate-network
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:15-alpine
+    container_name: realestate-db
+    environment:
+      - POSTGRES_DB=realestate
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - realestate-network
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+
+networks:
+  realestate-network:
+    driver: bridge
