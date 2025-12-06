@@ -1,66 +1,96 @@
 #!/usr/bin/env python3
 """
-Clean secret from git history and push to GitHub.
-This removes .env files from all commits without rebuilding the entire repo.
+Secret Scanner - Finds and reports potential secrets in repository
+Usage: python3 clean_secret.py
 """
 
-import subprocess
-import sys
 import os
+import re
+from pathlib import Path
 
-def run_command(cmd, check=True):
-    """Run a shell command and return output"""
-    print(f"Running: {cmd}")
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    if check and result.returncode != 0:
-        print(f"ERROR: {result.stderr}")
-        sys.exit(1)
-    return result.stdout + result.stderr
+# Patterns for common secrets
+PATTERNS = {
+    'huggingface': r'hf_[A-Za-z0-9]{20,}',
+    'api_key': r'api[_-]?key["\']?\s*[:=]\s*["\']?[A-Za-z0-9]{20,}',
+    'secret': r'secret["\']?\s*[:=]\s*["\']?[A-Za-z0-9]{20,}',
+    'token': r'token["\']?\s*[:=]\s*["\']?[A-Za-z0-9]{20,}',
+    'password': r'password["\']?\s*[:=]\s*["\']?[^\s"\']+',
+}
+
+def scan_file(filepath):
+    """Scan a single file for secrets"""
+    try:
+        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+            
+        results = []
+        for secret_type, pattern in PATTERNS.items():
+            matches = re.finditer(pattern, content, re.IGNORECASE)
+            for match in matches:
+                line_num = content[:match.start()].count('\n') + 1
+                results.append({
+                    'type': secret_type,
+                    'match': match.group(),
+                    'line': line_num
+                })
+        return results
+    except Exception as e:
+        return []
+
+def scan_repo(root_dir='.'):
+    """Scan entire repository"""
+    excluded_dirs = {'.git', '__pycache__', 'node_modules', '.venv', 'venv', 'env'}
+    excluded_files = {'.pyc', '.pyo', '.lock', '.yarn', '.jpg', '.png', '.zip'}
+    
+    all_findings = {}
+    
+    for filepath in Path(root_dir).rglob('*'):
+        # Skip excluded directories
+        if any(part in excluded_dirs for part in filepath.parts):
+            continue
+        
+        # Skip excluded file types
+        if any(str(filepath).endswith(ext) for ext in excluded_files):
+            continue
+        
+        # Only scan files
+        if not filepath.is_file():
+            continue
+        
+        findings = scan_file(filepath)
+        if findings:
+            all_findings[str(filepath)] = findings
+    
+    return all_findings
 
 def main():
-    os.chdir(r"c:\Users\hp\Downloads\Real Estate")
+    print("=" * 60)
+    print("SECRET SCANNER - Repository Secret Detection")
+    print("=" * 60)
     
-    print("="*60)
-    print("Cleaning .env from git history")
-    print("="*60)
+    findings = scan_repo()
     
-    # Set environment variable to suppress warning
-    os.environ['FILTER_BRANCH_SQUELCH_WARNING'] = '1'
+    if not findings:
+        print("✓ No secrets detected!")
+        return 0
     
-    # Remove .env from history using filter-branch
-    print("\n1. Removing backend/.env from all commits...")
-    run_command('git filter-branch -f --tree-filter "del /q backend\\.env 2>nul" -- --all')
+    print(f"\n⚠ Found {sum(len(f) for f in findings.values())} potential secrets:\n")
     
-    # Clean up reflog
-    print("\n2. Cleaning reflog...")
-    run_command('git reflog expire --expire=now --all', check=False)
+    for filepath, results in findings.items():
+        print(f"\n📄 {filepath}")
+        for result in results:
+            print(f"   Line {result['line']}: [{result['type'].upper()}] {result['match'][:50]}")
     
-    # Aggressive garbage collection
-    print("\n3. Running garbage collection...")
-    run_command('git gc --aggressive --prune=now', check=False)
+    print("\n" + "=" * 60)
+    print("ACTION REQUIRED:")
+    print("1. Review findings above")
+    print("2. Remove secrets from files")
+    print("3. Regenerate compromised tokens")
+    print("4. Run: git add -A && git commit")
+    print("5. Run: git push -f origin main")
+    print("=" * 60)
     
-    # Verify the secret is gone
-    print("\n4. Verifying secret is removed...")
-    output = subprocess.run(
-        'git log -p --all -- backend/.env',
-        shell=True,
-        capture_output=True,
-        text=True
-    ).stdout
-    
-    if 'HUGGINGFACE_API_KEY' in output:
-        print("ERROR: Secret still found in history!")
-        sys.exit(1)
-    else:
-        print("✓ Secret successfully removed from history")
-    
-    # Force push
-    print("\n5. Force pushing to GitHub...")
-    run_command('git push -f origin main')
-    
-    print("\n" + "="*60)
-    print("✓ SUCCESS! Secret removed and pushed to GitHub")
-    print("="*60)
+    return 1
 
 if __name__ == '__main__':
-    main()
+    exit(main())
