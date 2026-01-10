@@ -97,6 +97,8 @@ REACT_APP_API_URL=http://127.0.0.1:8000/api/query
 npm start
 ```
 
+# Screenshot
+<img width="1920" height="1080" alt="Screenshot (194)" src="https://github.com/user-attachments/assets/4903a5fa-945c-4caf-9d4f-d954a351b4ad" />
 
 
 
